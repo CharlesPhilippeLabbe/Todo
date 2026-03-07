@@ -17,7 +17,7 @@ type Templates struct {
 	templates *template.Template
 }
 
-func (t *Templates) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+func (t *Templates) Render(w io.Writer, name string, data any, c echo.Context) error {
 
 	return t.templates.ExecuteTemplate(w, name, data)
 }
@@ -164,7 +164,7 @@ func main() {
 			if page.Data.Done.hasTask(name) < 0 {
 				page.Data.Done.Tasks = append(page.Data.Done.Tasks, newTask(name))
 			}
-		}else if !page.Data.Done.deleteTask(name) {
+		} else if !page.Data.Done.deleteTask(name) {
 			return c.HTML(404, "not found")
 		}
 		return c.Render(200, "display", page.Data)

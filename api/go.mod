@@ -1,6 +1,6 @@
 module mywebsite.tv/name
 
-go 1.22.1
+go 1.26.1
 
 require github.com/labstack/echo/v4 v4.12.0
 
