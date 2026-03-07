@@ -72,8 +72,8 @@ func (d *Tasks) deleteTask(name string) bool {
 	return true
 }
 func (d *Tasks) hasTask(name string) int {
-	for i, contact := range d.Tasks {
-		if contact.Name == name {
+	for i, task := range d.Tasks {
+		if task.Name == name {
 			return i
 		}
 	}
@@ -136,40 +136,52 @@ func main() {
 		render(w, "index", page)
 	})
 
-	mux.HandleFunc("POST /api/contacts", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("POST /api/tasks", func(w http.ResponseWriter, r *http.Request) {
 		name := r.FormValue("name")
 		if page.Data.Todo.hasTask(name) >= 0 {
 			formData := newFormData()
 			formData.Values["name"] = name
-			formData.Errors["email"] = "Already exists"
+			formData.Errors["task"] = "Already exists"
 
 			w.WriteHeader(422)
 			render(w, "form", formData)
 			return
 		}
-		contact := newTask(name)
-		page.Data.Todo.Tasks = append(page.Data.Todo.Tasks, contact)
+		task := newTask(name)
+		page.Data.Todo.Tasks = append(page.Data.Todo.Tasks, task)
 
 		render(w, "form", newFormData())
-		render(w, "oob-contact", contact)
+		render(w, "oob-task", task)
 	})
-	mux.HandleFunc("PUT /api/task/{name}", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("PUT /api/tasks/{name}", func(w http.ResponseWriter, r *http.Request) {
 		name := r.PathValue("name")
+		move := r.FormValue("move")
+
+		var target *Tasks
 		if page.Data.Todo.deleteTask(name) {
-			if page.Data.Doing.hasTask(name) < 0 {
-				page.Data.Doing.Tasks = append(page.Data.Doing.Tasks, newTask(name))
+			if move == "forward" {
+				target = &page.Data.Doing
 			}
 		} else if page.Data.Doing.deleteTask(name) {
-			if page.Data.Done.hasTask(name) < 0 {
-				page.Data.Done.Tasks = append(page.Data.Done.Tasks, newTask(name))
+			if move == "forward" {
+				target = &page.Data.Done
+			} else {
+				target = &page.Data.Todo
 			}
-		} else if !page.Data.Done.deleteTask(name) {
+		} else if page.Data.Done.deleteTask(name) {
+			if move == "back" {
+				target = &page.Data.Doing
+			}
+		} else {
 			w.WriteHeader(http.StatusNotFound)
 			_, err := w.Write([]byte("not found"))
 			if err != nil {
 				log.Println(err)
 			}
 			return
+		}
+		if target != nil && target.hasTask(name) < 0 {
+			target.Tasks = append(target.Tasks, newTask(name))
 		}
 		render(w, "display", page.Data)
 	})
@@ -185,9 +197,9 @@ func main() {
 	}
 }
 func LoggingMiddleware(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        start := time.Now()
-        next.ServeHTTP(w, r)
-        log.Printf("[%s] %s %s took %v\n", r.Method, r.URL.Path, r.Proto, time.Since(start))
-    })
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		log.Printf("[%s] %s %s took %v\n", r.Method, r.URL.Path, r.Proto, time.Since(start))
+	})
 }

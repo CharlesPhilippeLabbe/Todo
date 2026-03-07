@@ -14,12 +14,12 @@
 
 
 {{ block "form" . }} 
-    <form hx-swap="outerHTML" hx-post="/api/contacts">
+    <form hx-swap="outerHTML" hx-post="/api/tasks">
         name: <input 
             {{ if .Values.name }} value="{{ .Values.name }}" {{ end }}
-            type="text" name="name"/>
-        {{ if .Errors.email }}
-            <div style="color: red">{{ .Errors.email }}</div>
+            type="text" name="name" autofocus/>
+        {{ if .Errors.task }}
+            <div style="color: red">{{ .Errors.task }}</div>
         {{ end }}
         <button type="submit">Create Task </button>
     </form>
@@ -27,7 +27,7 @@
 
 
 {{ block "display" . }}
-    <div id="contacts" hx-swap="outerHTML" style="display: flex; flex-direction: row; width: 100%; gap: 1em; justify-content: space-evenly;">
+    <div id="tasks" hx-swap="outerHTML" style="display: flex; flex-direction: row; width: 100%; gap: 1em; justify-content: space-evenly;">
         {{ template "task-list" .Todo }}
         {{ template "task-list" .Doing }}
         {{ template "task-list" .Done }}
@@ -43,26 +43,41 @@
 			</thead>
             <tbody id="{{ .Name }}-table">
 			{{ range .Tasks }}
-				{{ template "contact" . }}
+				{{ template "task" . }}
 			{{ end }} 
 			</tbody>
 		</table>
 {{ end }}
 
 
-{{block "contact" . }}
+{{block "task" . }}
     <tr>
         <td id="{{ .Name }}-name" hx-swap="innerHTML"> 
+            <button 
+                hx-put="/api/tasks/{{ .Name }}" 
+                hx-target="#tasks" 
+                hx-swap="outerHTML"
+                hx-vals='{"move":"back"}'
+            >
+                &lArr;
+            </button>
             {{ .Name }} 
-            <button hx-put="/api/task/{{ .Name }}" hx-target="#contacts" hx-swap="outerHTML">&rArr;</button>
+            <button 
+                hx-put="/api/tasks/{{ .Name }}" 
+                hx-target="#tasks" 
+                hx-swap="outerHTML"
+                hx-vals='{"move":"forward"}'
+            >
+                &rArr;
+            </button>
         </td>
     </tr>
 {{ end }}
 
-{{ block "oob-contact" . }} 
+{{ block "oob-task" . }} 
 	<template>
     <tbody  hx-swap-oob="afterbegin:#ToDo-table" >
-        {{ template "contact" . }}
+        {{ template "task" . }}
     </tbody>
 	</template>
 {{ end }}
