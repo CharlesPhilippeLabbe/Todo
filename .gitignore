@@ -3,3 +3,4 @@
 client/themes/*
 .hugo_build.lock
 client/resources/_gen/*
+api/tmp/*
