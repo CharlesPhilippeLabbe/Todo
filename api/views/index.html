@@ -1,0 +1,71 @@
+{{ block "index" . }}
+        <script>
+            document.addEventListener('htmx:beforeSwap', function(evt) {
+                if(evt.detail.xhr.status === 422) {
+                    evt.detail.shouldSwap = true;
+                    evt.detail.isError = false;
+                }
+            });
+        </script>
+	{{ template "form" .Form }} 
+	<hr/>
+	{{ template "display" .Data }}
+{{ end }}
+
+
+{{ block "form" . }} 
+    <form hx-swap="outerHTML" hx-post="/api/contacts">
+        name: <input 
+            {{ if .Values.name }} value="{{ .Values.name }}" {{ end }}
+            type="text" name="name"/>
+        {{ if .Errors.email }}
+            <div style="color: red">{{ .Errors.email }}</div>
+        {{ end }}
+        <button type="submit">Create Task </button>
+    </form>
+{{ end }}
+
+
+{{ block "display" . }}
+    <div id="contacts" hx-swap="outerHTML" style="display: flex; flex-direction: row; width: 100%; gap: 1em; justify-content: space-evenly;">
+        {{ template "task-list" .Todo }}
+        {{ template "task-list" .Doing }}
+        {{ template "task-list" .Done }}
+    </div>
+{{ end }}
+
+{{ block "task-list" . }}
+		<table >
+			<thead>
+				<tr>
+                    <td style="min-width: 200px;">{{ .Name }}</td>
+				</tr>
+			</thead>
+            <tbody id="{{ .Name }}-table">
+			{{ range .Tasks }}
+				{{ template "contact" . }}
+			{{ end }} 
+			</tbody>
+		</table>
+{{ end }}
+
+
+{{block "contact" . }}
+    <tr>
+        <td id="{{ .Name }}-name" hx-swap="innerHTML"> 
+            {{ .Name }} 
+            <button hx-put="/api/task/{{ .Name }}" hx-target="#contacts" hx-swap="outerHTML">&rArr;</button>
+        </td>
+    </tr>
+{{ end }}
+
+{{ block "oob-contact" . }} 
+	<template>
+    <tbody  hx-swap-oob="afterbegin:#ToDo-table" >
+        {{ template "contact" . }}
+    </tbody>
+	</template>
+{{ end }}
+
+return false
+
