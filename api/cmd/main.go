@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"slices"
 	"time"
+	"todo/common/tasks"
 )
 
 type Templates struct {
@@ -27,60 +27,6 @@ func newTemplate() *Templates {
 	}
 }
 
-type Task struct {
-	Name string
-}
-
-func newTask(name string) Task {
-	return Task{
-		Name: name,
-	}
-}
-
-type Tasks struct {
-	Name  string
-	Tasks []Task
-}
-
-type Data struct {
-	Todo  Tasks
-	Doing Tasks
-	Done  Tasks
-}
-
-func newData() Data {
-	return Data{
-		Todo: Tasks{
-			Name: "ToDo",
-			Tasks: []Task{
-				newTask("test"),
-				newTask("John"),
-				newTask("Claire"),
-			},
-		},
-		Doing: Tasks{Name: "Doing"},
-		Done:  Tasks{Name: "Done"},
-	}
-}
-
-func (d *Tasks) deleteTask(name string) bool {
-	i := d.hasTask(name)
-	if i < 0 {
-		return false
-	}
-	d.Tasks = slices.Delete(d.Tasks, i, i+1)
-	return true
-}
-func (d *Tasks) hasTask(name string) int {
-	for i, task := range d.Tasks {
-		if task.Name == name {
-			return i
-		}
-	}
-
-	return -1
-}
-
 type FormData struct {
 	Values map[string]string
 	Errors map[string]string
@@ -94,14 +40,14 @@ func newFormData() FormData {
 }
 
 type Page struct {
-	Data Data
+	Data tasks.Data
 	Form FormData
 }
 
 func newPage() Page {
 
 	return Page{
-		Data: newData(),
+		Data: tasks.NewData(),
 		Form: newFormData(),
 	}
 }
@@ -138,7 +84,7 @@ func main() {
 
 	mux.HandleFunc("POST /api/tasks", func(w http.ResponseWriter, r *http.Request) {
 		name := r.FormValue("name")
-		if page.Data.Todo.hasTask(name) >= 0 {
+		if page.Data.Todo.HasTask(name) >= 0 {
 			formData := newFormData()
 			formData.Values["name"] = name
 			formData.Errors["task"] = "Already exists"
@@ -147,7 +93,7 @@ func main() {
 			render(w, "form", formData)
 			return
 		}
-		task := newTask(name)
+		task := tasks.NewTask(name)
 		page.Data.Todo.Tasks = append(page.Data.Todo.Tasks, task)
 
 		render(w, "form", newFormData())
@@ -157,31 +103,13 @@ func main() {
 		name := r.PathValue("name")
 		move := r.FormValue("move")
 
-		var target *Tasks
-		if page.Data.Todo.deleteTask(name) {
-			if move == "forward" {
-				target = &page.Data.Doing
-			}
-		} else if page.Data.Doing.deleteTask(name) {
-			if move == "forward" {
-				target = &page.Data.Done
-			} else {
-				target = &page.Data.Todo
-			}
-		} else if page.Data.Done.deleteTask(name) {
-			if move == "back" {
-				target = &page.Data.Doing
-			}
-		} else {
+		err := page.Data.MoveTask(name, move)
+		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			_, err := w.Write([]byte("not found"))
 			if err != nil {
 				log.Println(err)
 			}
-			return
-		}
-		if target != nil && target.hasTask(name) < 0 {
-			target.Tasks = append(target.Tasks, newTask(name))
 		}
 		render(w, "display", page.Data)
 	})
