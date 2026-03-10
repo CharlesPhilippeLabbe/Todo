@@ -12,7 +12,7 @@ type: docs
 touch
 </button>
 
-<div style="width:100%;text-align:center;"
+<div style="width:100%;"
     id="place"
     hx-get="/api" hx-swap="innerHTML"
     hx-trigger="load"

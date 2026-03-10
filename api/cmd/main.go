@@ -8,6 +8,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"time"
+	"todo/common/storage"
 	"todo/common/tasks"
 )
 
@@ -40,19 +41,32 @@ func newFormData() FormData {
 }
 
 type Page struct {
-	Data tasks.Data
+	Data *tasks.List
 	Form FormData
 }
 
 func newPage() Page {
 
 	return Page{
-		Data: tasks.NewData(),
+		Data: tasks.NewList("default"),
 		Form: newFormData(),
 	}
 }
 
 func main() {
+
+	db, err := storage.NewSqlite("tmp/test.db")
+	if err != nil {
+		log.Fatalf("could not create database: %v", err)
+		return
+	}
+
+	repo, err := tasks.NewRepository(db)
+	if err != nil {
+		log.Fatalf("could not create repository: %v", err)
+		return
+	}
+	tc := tasks.NewController(repo)
 
 	page := newPage()
 	templates := newTemplate()
@@ -79,39 +93,49 @@ func main() {
 	}
 
 	mux.HandleFunc("GET /api", func(w http.ResponseWriter, r *http.Request) {
-		render(w, "index", page)
+		l, err := tc.ListTasks(r.Context(), "default")
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Println(err)
+			return
+		}
+
+		render(w, "index", &Page{
+			Form: newFormData(),
+			Data: l,
+		})
 	})
 
 	mux.HandleFunc("POST /api/tasks", func(w http.ResponseWriter, r *http.Request) {
 		name := r.FormValue("name")
-		if page.Data.Todo.HasTask(name) >= 0 {
+
+		//
+		t, err := tc.NewTask(r.Context(), "default", "ToDo", name)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
 			formData := newFormData()
 			formData.Values["name"] = name
-			formData.Errors["task"] = "Already exists"
-
-			w.WriteHeader(422)
+			formData.Errors["task"] = err.Error()
 			render(w, "form", formData)
 			return
 		}
-		task := tasks.NewTask(name)
-		page.Data.Todo.Tasks = append(page.Data.Todo.Tasks, task)
 
+		log.Printf("New Task: %v\n", t)
 		render(w, "form", newFormData())
-		render(w, "oob-task", task)
+		render(w, "oob-task", t)
 	})
-	mux.HandleFunc("PUT /api/tasks/{name}", func(w http.ResponseWriter, r *http.Request) {
-		name := r.PathValue("name")
-		move := r.FormValue("move")
 
-		err := page.Data.MoveTask(name, move)
+	mux.HandleFunc("PUT /api/tasks/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		move := r.FormValue("move")
+		l, err := tc.MoveTask(r.Context(), "default", id, move)
 		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			_, err := w.Write([]byte("not found"))
-			if err != nil {
-				log.Println(err)
-			}
+			log.Println(err)
+			return
 		}
-		render(w, "display", page.Data)
+		render(w, "display", l)
 	})
 
 	mux.HandleFunc("DELETE /data", func(w http.ResponseWriter, r *http.Request) {

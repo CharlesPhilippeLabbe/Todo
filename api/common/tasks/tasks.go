@@ -6,11 +6,15 @@ import (
 )
 
 var (
-	ErrTaskDoesNotExist error = fmt.Errorf("task not found")
+	ErrTaskDoesNotExist   error = fmt.Errorf("task not found")
+	ErrTargetDoesNotExist error = fmt.Errorf("target does not exit")
 )
 
 type Task struct {
-	Name string
+	Id       string `json:"id,omitempty"`
+	Name     string `json:"name,omitempty"`
+	List     string `json:"list,omitempty"`
+	Category string `json:"category,omitempty"`
 }
 
 func NewTask(name string) Task {
@@ -24,17 +28,33 @@ type Tasks struct {
 	Tasks []Task
 }
 
-func (d *Tasks) DeleteTask(name string) bool {
-	i := d.HasTask(name)
-	if i < 0 {
-		return false
+func NewTasks(name string) *Tasks {
+	return &Tasks{
+		Name:  name,
+		Tasks: make([]Task, 0),
 	}
-	d.Tasks = slices.Delete(d.Tasks, i, i+1)
-	return true
 }
-func (d *Tasks) HasTask(name string) int {
+
+func (d *Tasks) DeleteTask(id string) *Task {
+	if d == nil {
+		return nil
+	}
+	i := d.HasTask(id)
+	if i < 0 {
+		return nil
+	}
+	t := d.Tasks[i]
+	d.Tasks = slices.Delete(d.Tasks, i, i+1)
+	return &t
+}
+
+func (d *Tasks) HasTask(id string) int {
+	if d == nil {
+		return -1
+	}
+
 	for i, task := range d.Tasks {
-		if task.Name == name {
+		if task.Id == id {
 			return i
 		}
 	}
@@ -42,49 +62,78 @@ func (d *Tasks) HasTask(name string) int {
 	return -1
 }
 
-type Data struct {
-	Todo  Tasks
-	Doing Tasks
-	Done  Tasks
+func (d *Tasks) AddTask(t *Task) {
+
+	if t == nil {
+		return
+	}
+
+	d.Tasks = append(d.Tasks, *t)
 }
 
-func NewData() Data {
-	return Data{
-		Todo: Tasks{
-			Name: "ToDo",
-			Tasks: []Task{
-				NewTask("test"),
-				NewTask("John"),
-				NewTask("Claire"),
-			},
+type List struct {
+	Name  string            `json:"name,omitempty"`
+	Tasks map[string]*Tasks `json:"tasks,omitempty"`
+}
+
+func NewList(name string) *List {
+
+	return &List{
+		Name: name,
+		Tasks: map[string]*Tasks{
+			"ToDo":  NewTasks("ToDo"),
+			"Doing": NewTasks("Doing"),
+			"Done":  NewTasks("Done"),
 		},
-		Doing: Tasks{Name: "Doing"},
-		Done:  Tasks{Name: "Done"},
 	}
 }
 
-func (d *Data) MoveTask(name, direction string) error {
+func (l *List) AddTask(t *Task) {
+	if t == nil {
+		return
+	}
+	tasks, ok := l.Tasks[t.Category]
+	if !ok {
+		tasks = NewTasks(t.Category)
+		l.Tasks[t.Category] = tasks
+	}
+
+	tasks.AddTask(t)
+}
+
+func (l *List) MoveTask(id, direction string) (string, error) {
 	var target *Tasks
-	if d.Todo.DeleteTask(name) {
+	todo := l.Tasks["ToDo"]
+	doing := l.Tasks["Doing"]
+	done := l.Tasks["Done"]
+
+	t := todo.DeleteTask(id)
+
+	if t != nil {
 		if direction == "forward" {
-			target = &d.Doing
+			target = doing
 		}
-	} else if d.Doing.DeleteTask(name) {
+	} else if t = doing.DeleteTask(id); t != nil {
 		if direction == "forward" {
-			target = &d.Done
+			target = done
 		} else {
-			target = &d.Todo
+			target = todo
 		}
-	} else if d.Done.DeleteTask(name) {
+	} else if t = done.DeleteTask(id); t != nil {
 		if direction == "back" {
-			target = &d.Doing
+			target = doing
 		}
 	} else {
-		return ErrTaskDoesNotExist
+		return "", ErrTaskDoesNotExist
 	}
-	if target != nil && target.HasTask(name) < 0 {
-		target.Tasks = append(target.Tasks, NewTask(name))
+	if target == nil {
+		return "", ErrTargetDoesNotExist
 	}
 
-	return nil
+	if target.HasTask(id) < 0 {
+		t.Category = target.Name
+		target.Tasks = append(target.Tasks, *t)
+	}
+
+	return target.Name, nil
 }
