@@ -1,0 +1,69 @@
+.touchme {
+    width: 100%;
+    padding:10px;
+}
+.task-input ,
+.task-input input,
+.task-input button {
+    width: 100%;
+}
+
+.list {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap:0.5em;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+}
+
+.list thead {
+    text-align: center;
+}
+
+.list table {
+    overflow: visible;
+    table-layout: fixed;
+}
+
+.list table tr td {
+    padding: 5px 0;
+    width: 200px;
+}
+
+.list .task .name {
+    text-align: left;
+    margin-left: 22px;
+    margin-right: 22px;
+}
+
+.list tr {
+}
+.list .task {
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+}
+
+.list .button-column {
+    display: block;
+    border: none;
+    position: relative;
+    width:0px;
+    top: 0px;
+}
+
+.list .button-column button {
+    width:20px;
+    height:100%;
+    background: transparent;
+    border: none;
+}
+
+.list .button-column.button-right {
+    right: 20px;
+}
+.list .button-column.button-left {
+    left: 0px;
+}

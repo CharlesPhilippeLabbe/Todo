@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -53,7 +55,10 @@ func newPage() Page {
 	}
 }
 
+var port int
+
 func main() {
+	port = *flag.Int("port", 8080, "Port number")
 
 	db, err := storage.NewSqlite("tmp/test.db")
 	if err != nil {
@@ -143,7 +148,7 @@ func main() {
 		render(w, "index", page)
 	})
 
-	err = http.ListenAndServe(":8080", LoggingMiddleware(mux))
+	err = http.ListenAndServe(fmt.Sprintf(":%d", port), LoggingMiddleware(mux))
 	if err != nil {
 		log.Println(err)
 	}

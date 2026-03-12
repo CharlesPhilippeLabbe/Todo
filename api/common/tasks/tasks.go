@@ -25,11 +25,13 @@ func NewTask(name string) Task {
 
 type Tasks struct {
 	Name  string
+	List  string
 	Tasks []Task
 }
 
-func NewTasks(name string) *Tasks {
+func NewTasks(list, name string) *Tasks {
 	return &Tasks{
+		List:  list,
 		Name:  name,
 		Tasks: make([]Task, 0),
 	}
@@ -81,9 +83,9 @@ func NewList(name string) *List {
 	return &List{
 		Name: name,
 		Tasks: map[string]*Tasks{
-			"ToDo":  NewTasks("ToDo"),
-			"Doing": NewTasks("Doing"),
-			"Done":  NewTasks("Done"),
+			"ToDo":  NewTasks(name, "ToDo"),
+			"Doing": NewTasks(name, "Doing"),
+			"Done":  NewTasks(name, "Done"),
 		},
 	}
 }
@@ -94,7 +96,7 @@ func (l *List) AddTask(t *Task) {
 	}
 	tasks, ok := l.Tasks[t.Category]
 	if !ok {
-		tasks = NewTasks(t.Category)
+		tasks = NewTasks(t.List, t.Category)
 		l.Tasks[t.Category] = tasks
 	}
 
