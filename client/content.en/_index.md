@@ -14,7 +14,7 @@ touch
 
 <div style="width:100%;"
     id="place"
-    hx-get="/api" hx-swap="innerHTML"
+    hx-get="/api/default" hx-swap="innerHTML"
     hx-trigger="load"
 >
     placeholder

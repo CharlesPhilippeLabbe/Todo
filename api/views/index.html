@@ -1,21 +1,54 @@
 {{ block "index" . }}
     <script>
+        const state = []
         document.addEventListener('htmx:beforeSwap', function(evt) {
             if(evt.detail.xhr.status === 422) {
                 evt.detail.shouldSwap = true;
                 evt.detail.isError = false;
             }
         });
+
+        document.addEventListener('afterAdd', function(e){
+            if(!e?.detail?.value){
+                return
+            }
+            const url = new URL(window.location.href);
+            url.searchParams.append("lists", e.detail.value);
+            window.history.pushState({path:url.href}, '', url.href)
+        });
+
+
     </script>
     <h2>List: {{ .Data.Name }}</h2>
 	{{ template "form" .Form }} 
 	<hr/>
+    <div id="list-all"
+        hx-trigger='{"afterAdd": "{{ .Form.List }}"}'
+        >
 	{{ template "display" .Data }}
+    </div>
+    <hr/>
+    {{ template "addList" .Form }}
 {{ end }}
 
+{{ block "addList" . }}
+    <form hx-swap="outerHTML" hx-post="/api/lists"
+            class="new-list"
+    >
+        New List: <input 
+            {{ if .Values.name }} value="{{ .Values.name }}" {{ end }}
+            type="text" name="name"
+            {{ if .Errors }} autofocus {{ end }}
+            />
+        {{ if .Errors.task }}
+            <div style="color: red">{{ .Errors.task }}</div>
+        {{ end }}
+        <button type="submit">+</button>
+    </form>
+{{ end}}
 
 {{ block "form" . }} 
-    <form hx-swap="outerHTML" hx-post="/api/tasks"
+    <form hx-swap="outerHTML" hx-post="/api/{{ .List }}/tasks"
             class="task-input"
     >
         Name: <input 
@@ -40,6 +73,16 @@
         {{ template "task-list" .Tasks.Done }}
     </div>
 {{ end }}
+
+{{ block "display-oob" . }}
+    <div hx-swap-oob="beforeend:#list-all"
+    >
+        <hr/>
+        <h2>List: {{ .Data.Name }}</h2>
+        {{ template "form" .Form }}
+        {{ template "display" .Data }}
+    </div>
+{{ end}}
 
 {{ block "task-list" . }}
 		<table >
@@ -66,7 +109,7 @@
             <div class="task">
                 <div class="button-column button-left">
                     <button 
-                        hx-put="/api/tasks/{{ .Id }}" 
+                     hx-put="/api/{{ .List }}/tasks/{{ .Id }}" 
                         hx-target="#tasks-{{ .List }}" 
                         hx-swap="outerHTML"
                         hx-vals='{"move":"back"}'
@@ -79,7 +122,7 @@
                 </div>
                 <div class="button-column button-right">
                     <button
-                        hx-put="/api/tasks/{{ .Id }}" 
+                        hx-put="/api/{{ .List }}/tasks/{{ .Id }}" 
                         hx-target="#tasks-{{ .List }}" 
                         hx-swap="outerHTML"
                         hx-vals='{"move":"forward"}'

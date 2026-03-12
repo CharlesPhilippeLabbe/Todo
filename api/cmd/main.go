@@ -31,12 +31,14 @@ func newTemplate() *Templates {
 }
 
 type FormData struct {
+	List   string
 	Values map[string]string
 	Errors map[string]string
 }
 
-func newFormData() FormData {
+func newFormData(list string) FormData {
 	return FormData{
+		List:   list,
 		Values: make(map[string]string),
 		Errors: make(map[string]string),
 	}
@@ -51,7 +53,7 @@ func newPage() Page {
 
 	return Page{
 		Data: tasks.NewList("default"),
-		Form: newFormData(),
+		Form: newFormData("default"),
 	}
 }
 
@@ -97,8 +99,12 @@ func main() {
 		}
 	}
 
-	mux.HandleFunc("GET /api", func(w http.ResponseWriter, r *http.Request) {
-		l, err := tc.ListTasks(r.Context(), "default")
+	mux.HandleFunc("GET /api/{list}", func(w http.ResponseWriter, r *http.Request) {
+		list := r.PathValue("list")
+		if list == "" {
+			list = "default"
+		}
+		l, err := tc.ListTasks(r.Context(), list)
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -107,20 +113,20 @@ func main() {
 		}
 
 		render(w, "index", &Page{
-			Form: newFormData(),
+			Form: newFormData(list),
 			Data: l,
 		})
 	})
 
-	mux.HandleFunc("POST /api/tasks", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("POST /api/{list}/tasks", func(w http.ResponseWriter, r *http.Request) {
+		list := r.PathValue("list")
 		name := r.FormValue("name")
-
 		//
-		t, err := tc.NewTask(r.Context(), "default", "ToDo", name)
+		t, err := tc.NewTask(r.Context(), list, "ToDo", name)
 		if err != nil {
 			log.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)
-			formData := newFormData()
+			formData := newFormData(list)
 			formData.Values["name"] = name
 			formData.Errors["task"] = err.Error()
 			render(w, "form", formData)
@@ -128,19 +134,51 @@ func main() {
 		}
 
 		log.Printf("New Task: %v\n", t)
-		render(w, "form", newFormData())
+		render(w, "form", newFormData(list))
 		render(w, "oob-task", t)
 	})
 
-	mux.HandleFunc("PUT /api/tasks/{id}", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("PUT /api/{list}/tasks/{id}", func(w http.ResponseWriter, r *http.Request) {
+		list := r.PathValue("list")
 		id := r.PathValue("id")
 		move := r.FormValue("move")
-		l, err := tc.MoveTask(r.Context(), "default", id, move)
+		l, err := tc.MoveTask(r.Context(), list, id, move)
 		if err != nil {
 			log.Println(err)
 			return
 		}
 		render(w, "display", l)
+	})
+
+	mux.HandleFunc("POST /api/lists", func(w http.ResponseWriter, r *http.Request) {
+		name := r.FormValue("name")
+		//
+		//t, err := tc.NewTask(r.Context(), name, "ToDo", name)
+		if err != nil {
+			log.Println(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			formData := newFormData(name)
+			formData.Values["name"] = name
+			formData.Errors["task"] = err.Error()
+			render(w, "form", formData)
+			return
+		}
+
+		w.Header().Add("Hx-Trigger-After-Swap", fmt.Sprintf(`{"afterAdd":"%s"}`, name))
+		render(w, "addList", newFormData(""))
+		l, err := tc.ListTasks(r.Context(), name)
+		if err != nil {
+			log.Println(err)
+			//TODO
+			return
+		}
+		p := &Page{
+			Data: l,
+			Form: newFormData(name),
+		}
+
+		render(w, "display-oob", p)
+		//render(w, "oob-task", t)
 	})
 
 	mux.HandleFunc("DELETE /data", func(w http.ResponseWriter, r *http.Request) {
