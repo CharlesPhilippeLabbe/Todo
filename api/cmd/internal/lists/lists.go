@@ -60,10 +60,10 @@ type Controller struct {
 	tc        *tasks.Controller
 }
 
-func NewController(tc *tasks.Controller) *Controller{
+func NewController(tc *tasks.Controller) *Controller {
 	return &Controller{
 		templates: newTemplate(),
-		tc: tc,
+		tc:        tc,
 	}
 }
 
@@ -76,9 +76,36 @@ func (c *Controller) render(w http.ResponseWriter, t string, d any) {
 }
 
 func (c *Controller) Index(w http.ResponseWriter, r *http.Request) {
-	c.render(w, "index", &Page{
-		Form: newFormData(""),
-	})
+	l, err := c.tc.ListTasks(r.Context(), "default")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Println(err)
+		return
+	}
+
+	lists := r.URL.Query()["lists"]
+
+	pageList := []*Page{
+		&Page{
+			Data: l,
+			Form: newFormData("default"),
+		},
+	}
+	for _, l := range lists {
+		log.Println(l)
+		tl, err := c.tc.ListTasks(r.Context(), l)
+		if err != nil {
+			log.Printf("Could not retreive list %s: %v\n", l, err)
+			continue
+		}
+		pageList = append(pageList, &Page{
+			Data: tl,
+			Form: newFormData(l),
+		})
+	}
+
+	c.render(w, "index", pageList)
+
 }
 
 func (c *Controller) List(w http.ResponseWriter, r *http.Request) {
@@ -94,7 +121,7 @@ func (c *Controller) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c.render(w, "display-oob", &Page{
+	c.render(w, "list-oob", &Page{
 		Form: newFormData(list),
 		Data: l,
 	})
@@ -150,6 +177,6 @@ func (c *Controller) AddList(w http.ResponseWriter, r *http.Request) {
 		Form: newFormData(name),
 	}
 
-	c.render(w, "display-oob", p)
+	c.render(w, "list-oob", p)
 	//c.render(w, "oob-task", t)
 }

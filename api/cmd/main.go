@@ -49,7 +49,7 @@ func main() {
 
 	mux.HandleFunc("GET /api/{list}", api.List)
 
-	mux.HandleFunc("POST /api/{list}/tasks", api.AddTak)
+	mux.HandleFunc("POST /api/{list}/tasks", api.AddTask)
 
 	mux.HandleFunc("PUT /api/{list}/tasks/{id}", api.MoveTask)
 
