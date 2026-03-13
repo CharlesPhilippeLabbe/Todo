@@ -17,16 +17,13 @@
             window.history.pushState({path:url.href}, '', url.href)
         });
 
+        document.body.addEventListener('htmx:syntax:error', function(event) {
+            console.error('HTMX Syntax Error:', event.detail);
+        });
+
 
     </script>
-    <h2>List: {{ .Data.Name }}</h2>
-	{{ template "form" .Form }} 
-	<hr/>
-    <div id="list-all"
-        hx-trigger='{"afterAdd": "{{ .Form.List }}"}'
-        >
-	{{ template "display" .Data }}
-    </div>
+    <div id="list-all" ></div>
     <hr/>
     {{ template "addList" .Form }}
 {{ end }}

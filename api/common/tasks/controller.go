@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type Controller struct {
@@ -15,6 +16,10 @@ func NewController(r *Repository) *Controller {
 }
 
 func (c *Controller) NewTask(ctx context.Context, list, category, name string) (*Task, error) {
+	name = strings.TrimSpace(name)
+	list = strings.TrimSpace(list)
+	category = strings.TrimSpace(category)
+
 	id, err := c.r.AddTask(ctx, list, category, name)
 	if err != nil {
 		return nil, fmt.Errorf("could not create task: %w", err)
