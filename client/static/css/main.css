@@ -60,6 +60,7 @@
     height:100%;
     background: transparent;
     border: none;
+    color: white;
 }
 
 .list .button-column.button-right {
@@ -67,4 +68,13 @@
 }
 .list .button-column.button-left {
     left: 0px;
+}
+
+.hide-list {
+    width: 100%;
+    color: white;
+    background: transparent;
+    border-radius: 0.5em;
+    border-color: #eee;
+    padding: 0.2em;
 }

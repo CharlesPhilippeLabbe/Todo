@@ -9,6 +9,15 @@
             }
         });
 
+        document.addEventListener('afterRemove', function(e){
+            if(!e?.detail?.value){
+                return
+            }
+            const url = new URL(window.location.href);
+            url.searchParams.delete("lists", e.detail.value);
+            window.history.pushState({path:url.href}, '', url.href)
+        });
+
         document.addEventListener('afterAdd', function(e){
             if(!e?.detail?.value){
                 return
@@ -68,11 +77,28 @@
 {{ end }}
 
 {{ block "list" . }}
-    <hr/>
-    <h2>List: {{ .Form.List }}</h2>
-    {{ template "form" .Form }}
-    {{ template "display" .Data }}
+    <div id="list-{{ .Form.List }}">
+        <hr/>
+        <h2>List: {{ .Form.List }}</h2>
+        {{ template "form" .Form }}
+        {{ template "display" .Data }}
+        {{ if ne .Form.List "default" }}
+        <button 
+            class="hide-list"
+            hx-delete="/api/{{ .Form.List }}"
+            hx-target="#list-{{ .Form.List }}"
+            hx-swap="delete"
+        >
+            Hide
+        </button>
+        {{ end }}
+    </div>
 {{ end }}
+
+{{ block "delete" . }}
+<div hx-swap-oob="delete:#">
+</div>
+{{ end}}
 
 {{ block "list-oob" . }}
     <div hx-swap-oob="beforeend:#list-all"

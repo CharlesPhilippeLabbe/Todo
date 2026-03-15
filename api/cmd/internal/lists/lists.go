@@ -127,6 +127,13 @@ func (c *Controller) List(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (c *Controller) RemoveList(w http.ResponseWriter, r *http.Request) {
+
+	list := r.PathValue("list")
+	w.Header().Add("Hx-Trigger-After-Swap", fmt.Sprintf(`{"afterRemove":"%s"}`, list))
+	w.WriteHeader(http.StatusOK)
+}
+
 func (c *Controller) AddTask(w http.ResponseWriter, r *http.Request) {
 	list := r.PathValue("list")
 	name := r.FormValue("name")

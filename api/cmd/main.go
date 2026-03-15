@@ -49,6 +49,8 @@ func main() {
 
 	mux.HandleFunc("GET /api/{list}", api.List)
 
+	mux.HandleFunc("DELETE /api/{list}", api.RemoveList)
+
 	mux.HandleFunc("POST /api/{list}/tasks", api.AddTask)
 
 	mux.HandleFunc("PUT /api/{list}/tasks/{id}", api.MoveTask)
