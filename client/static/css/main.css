@@ -55,12 +55,17 @@
     top: 0px;
 }
 
+.list .button-column button:hover {
+    background: var(--gray-200);
+    cursor: pointer;
+}
 .list .button-column button {
     width:20px;
     height:100%;
     background: transparent;
     border: none;
     color: white;
+    border-radius: 5px;
 }
 
 .list .button-column.button-right {
