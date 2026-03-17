@@ -54,7 +54,7 @@ func (c *Controller) ListTasks(ctx context.Context, name string) (*List, error) 
 	return list, nil
 }
 
-func (c *Controller) MoveTask(ctx context.Context, list, id, direction string) (*List, error) {
+func (c *Controller) MoveTask(ctx context.Context, list, id, direction string) (*Task, error) {
 	//TODO optimize...
 	l, err := c.ListTasks(ctx, list)
 	if err != nil {
@@ -71,9 +71,9 @@ func (c *Controller) MoveTask(ctx context.Context, list, id, direction string) (
 		return nil, err
 	}
 
-	err = c.r.Put(ctx, id, newCategory)
+	err = c.r.Put(ctx, id, newCategory.Category)
 	if err != nil {
 		return nil, fmt.Errorf("could not update task: %w", err)
 	}
-	return l, nil
+	return newCategory, nil
 }

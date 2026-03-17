@@ -1,6 +1,20 @@
 {{ block "index" . }}
     <script>
 
+        //const hash = window.location.hash.substring(1)
+        //if(hash !== ''){
+
+        //    const element = document.getElementById("list-"+hash)
+        //    if(element){
+        //        element.scrollIntoView({behavior: "smooth"})
+        //    }
+
+        //    const input = document.getElementById("task-input-"+hash)
+        //    if(input){
+        //        input.focus()
+        //    }
+        //}
+
 
         document.addEventListener('htmx:beforeSwap', function(evt) {
             if(evt.detail.xhr.status === 422) {
@@ -67,6 +81,7 @@
             class="task-input"
     >
         Name: <input 
+            id="task-input-{{ .List }}"
             {{ if .Values.name }} value="{{ .Values.name }}" {{ end }}
             type="text" name="name" autofocus/>
         {{ if .Errors.task }}
@@ -79,7 +94,7 @@
 {{ block "list" . }}
     <div id="list-{{ .Form.List }}">
         <hr/>
-        <h2>List: {{ .Form.List }}</h2>
+        <h2>List: {{ .Form.List }} <a class="anchor" href="#{{ .Form.List }}">#</a></h2>
         {{ template "form" .Form }}
         {{ template "display" .Data }}
         {{ if ne .Form.List "default" }}
@@ -139,17 +154,18 @@
 
 {{block "task" . }}
     <tr>
-        <td id="{{ .Id }}-name" hx-swap="innerHTML" 
+        <td id="task-{{ .Id }}" hx-swap="innerHTML" 
             class="name"
         > 
-            <div class="task">
-                <div class="button-column button-left">
+            <div class="task"
+                 hx-target="#task-{{ .Id }}" 
+                 hx-swap="delete"
+             >
+                 <div class="button-column button-left">
                     <button 
-                     hx-put="/api/{{ .List }}/tasks/{{ .Id }}" 
-                        hx-target="#tasks-{{ .List }}" 
-                        hx-swap="outerHTML"
-                        hx-vals='{"move":"back"}'
-                    >
+                         hx-put="/api/{{ .List }}/tasks/{{ .Id }}" 
+                         hx-vals='{"move":"back"}'
+                     >
                         &lsaquo;
                     </button>
                 </div>
@@ -159,8 +175,6 @@
                 <div class="button-column button-right">
                     <button
                         hx-put="/api/{{ .List }}/tasks/{{ .Id }}" 
-                        hx-target="#tasks-{{ .List }}" 
-                        hx-swap="outerHTML"
                         hx-vals='{"move":"forward"}'
                     >
                         &rsaquo;

@@ -163,7 +163,7 @@ func (c *Controller) MoveTask(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	c.render(w, "display", l)
+	c.render(w, "oob-task", l)
 }
 
 func (c *Controller) AddList(w http.ResponseWriter, r *http.Request) {

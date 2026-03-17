@@ -103,7 +103,7 @@ func (l *List) AddTask(t *Task) {
 	tasks.AddTask(t)
 }
 
-func (l *List) MoveTask(id, direction string) (string, error) {
+func (l *List) MoveTask(id, direction string) (*Task, error) {
 	var target *Tasks
 	todo := l.Tasks["ToDo"]
 	doing := l.Tasks["Doing"]
@@ -126,10 +126,10 @@ func (l *List) MoveTask(id, direction string) (string, error) {
 			target = doing
 		}
 	} else {
-		return "", ErrTaskDoesNotExist
+		return nil, ErrTaskDoesNotExist
 	}
 	if target == nil {
-		return "", ErrTargetDoesNotExist
+		return nil, ErrTargetDoesNotExist
 	}
 
 	if target.HasTask(id) < 0 {
@@ -137,5 +137,5 @@ func (l *List) MoveTask(id, direction string) (string, error) {
 		target.Tasks = append(target.Tasks, *t)
 	}
 
-	return target.Name, nil
+	return t, nil
 }
