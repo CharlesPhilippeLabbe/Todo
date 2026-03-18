@@ -54,26 +54,50 @@ func (c *Controller) ListTasks(ctx context.Context, name string) (*List, error) 
 	return list, nil
 }
 
-func (c *Controller) MoveTask(ctx context.Context, list, id, direction string) (*Task, error) {
-	//TODO optimize...
-	l, err := c.ListTasks(ctx, list)
+func (c *Controller) GetTask(ctx context.Context, list, id string) (*Task, error) {
+	t, err := c.r.Get(ctx, list, id)
 	if err != nil {
-		return nil, fmt.Errorf("could not list tasks: %w", err)
+		return nil, err
+	} else if t == nil {
+		return nil, fmt.Errorf("task %s not found: %w", id, ErrTaskDoesNotExist)
 	}
-	newCategory, err := l.MoveTask(id, direction)
+
+	return t, nil
+}
+
+func (c *Controller) MoveTask(ctx context.Context, list, id, direction string) (*Task, error) {
+	t, err := c.GetTask(ctx, list, id)
+	if err != nil {
+		return t, nil
+	}
+	//TODO remove the hardcoded stuff
+	action := t.Category + "_" + direction
+	switch action {
+	case "ToDo_forward":
+		t.Category = "Doing"
+	case "Doing_back":
+		t.Category = "ToDo"
+	case "Doing_forward":
+		t.Category = "Done"
+	case "Done_back":
+		t.Category = "Doing"
+	case "ToDo_back":
+		fallthrough
+	case "Done_forward":
+		err = ErrTargetDoesNotExist
+	}
+	//TODO optimize...
 	if errors.Is(err, ErrTargetDoesNotExist) {
 		err = c.r.Delete(ctx, id)
 		if err != nil {
 			return nil, fmt.Errorf("could not delete task: %w", err)
 		}
-
-	} else if err != nil {
-		return nil, err
+		return nil, nil
 	}
 
-	err = c.r.Put(ctx, id, newCategory.Category)
+	err = c.r.Put(ctx, id, t.Category)
 	if err != nil {
 		return nil, fmt.Errorf("could not update task: %w", err)
 	}
-	return newCategory, nil
+	return t, nil
 }

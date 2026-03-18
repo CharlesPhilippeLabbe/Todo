@@ -90,6 +90,26 @@ func (r *Repository) Delete(ctx context.Context, id string) error {
 	return err
 }
 
+func (r *Repository) Get(ctx context.Context, list, id string) (*Task, error) {
+	res, err := r.db.QueryContext(ctx,
+		"SELECT id, list, category, name from tasks where list = ? and id = ?",
+		list, id)
+
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	l, err := createList(ctx, res)
+	if err != nil {
+		return nil, err
+	} else if len(l) == 0 {
+		return nil, nil
+	}
+
+	return l[0], nil
+}
+
 func createList(ctx context.Context, res *sql.Rows) ([]*Task, error) {
 	tasks := make([]*Task, 0)
 

@@ -158,12 +158,15 @@ func (c *Controller) MoveTask(w http.ResponseWriter, r *http.Request) {
 	list := r.PathValue("list")
 	id := r.PathValue("id")
 	move := r.FormValue("move")
-	l, err := c.tc.MoveTask(r.Context(), list, id, move)
+	t, err := c.tc.MoveTask(r.Context(), list, id, move)
 	if err != nil {
 		log.Println(err)
 		return
+	} else if t == nil {
+		return
 	}
-	c.render(w, "oob-task", l)
+
+	c.render(w, "oob-task", t)
 }
 
 func (c *Controller) AddList(w http.ResponseWriter, r *http.Request) {
