@@ -16,7 +16,7 @@ import (
 var port int
 
 func main() {
-	port = *flag.Int("port", 8080, "Port number")
+	flag.IntVar(&port, "port", 8080, "Port number")
 	flag.Parse()
 
 	db, err := storage.NewSqlite("tmp/test.db")

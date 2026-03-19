@@ -153,8 +153,8 @@
 
 
 {{block "task" . }}
-    <tr>
-        <td id="task-{{ .Id }}" hx-swap="innerHTML" 
+    <tr id="task-{{ .Id }}">
+        <td hx-swap="innerHTML" 
             class="name"
         > 
             <div class="task"
