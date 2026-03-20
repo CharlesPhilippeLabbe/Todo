@@ -48,13 +48,17 @@ func main() {
 
 	mux.HandleFunc("GET /api", api.Index)
 
-	mux.HandleFunc("GET /api/{list}", api.List)
+	mux.HandleFunc("GET /api/selection", api.Selection)
 
-	mux.HandleFunc("DELETE /api/{list}", api.RemoveList)
+	mux.HandleFunc("GET /api/lists/{list}", api.List)
 
-	mux.HandleFunc("POST /api/{list}/tasks", api.AddTask)
+	mux.HandleFunc("DELETE /api/lists/{list}", api.RemoveList)
 
-	mux.HandleFunc("PUT /api/{list}/tasks/{id}", api.MoveTask)
+	mux.HandleFunc("POST /api/lists/{list}/tasks", api.AddTask)
+
+	mux.HandleFunc("PUT /api/lists/{list}/tasks/{id}", api.MoveTask)
+
+	mux.HandleFunc("PUT /api/lists/{list}", api.ToggleList)
 
 	mux.HandleFunc("POST /api/lists", api.AddList)
 

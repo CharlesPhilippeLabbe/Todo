@@ -76,21 +76,30 @@ func (c *Controller) render(w http.ResponseWriter, t string, d any) {
 }
 
 func (c *Controller) Index(w http.ResponseWriter, r *http.Request) {
+
+	pageList, err := c.tc.AllLists(r.Context())
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	c.render(w, "index", pageList)
+}
+
+func (c *Controller) Selection(w http.ResponseWriter, r *http.Request) {
 	l, err := c.tc.ListTasks(r.Context(), "default")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Println(err)
 		return
 	}
+	c.render(w, "list-oob", &Page{
+		Data: l,
+		Form: newFormData("default"),
+	})
 
 	lists := r.URL.Query()["lists"]
 
-	pageList := []*Page{
-		&Page{
-			Data: l,
-			Form: newFormData("default"),
-		},
-	}
 	for _, l := range lists {
 		log.Println(l)
 		tl, err := c.tc.ListTasks(r.Context(), l)
@@ -98,14 +107,13 @@ func (c *Controller) Index(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Could not retreive list %s: %v\n", l, err)
 			continue
 		}
-		pageList = append(pageList, &Page{
+
+		c.render(w, "list-oob", &Page{
 			Data: tl,
 			Form: newFormData(l),
 		})
 	}
-
-	c.render(w, "index", pageList)
-
+	//c.render(w, "listSelection", pageList)
 }
 
 func (c *Controller) List(w http.ResponseWriter, r *http.Request) {
@@ -131,7 +139,7 @@ func (c *Controller) RemoveList(w http.ResponseWriter, r *http.Request) {
 
 	list := r.PathValue("list")
 	w.Header().Add("Hx-Trigger-After-Swap", fmt.Sprintf(`{"afterRemove":"%s"}`, list))
-	w.WriteHeader(http.StatusOK)
+	c.render(w, "deleteList", list)
 }
 
 func (c *Controller) AddTask(w http.ResponseWriter, r *http.Request) {
@@ -171,9 +179,11 @@ func (c *Controller) MoveTask(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) AddList(w http.ResponseWriter, r *http.Request) {
 	name := r.FormValue("name")
+	if name == "" {
+		name = r.PathValue("list")
+	}
 	name = strings.TrimSpace(name)
 	//
-
 	w.Header().Add("Hx-Trigger-After-Swap", fmt.Sprintf(`{"afterAdd":"%s"}`, name))
 	c.render(w, "addList", newFormData(""))
 	l, err := c.tc.ListTasks(r.Context(), name)
@@ -188,5 +198,17 @@ func (c *Controller) AddList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c.render(w, "list-oob", p)
+	//c.render(w, "selectListInput-oob", name)
 	//c.render(w, "oob-task", t)
+}
+func (c *Controller) ToggleList(w http.ResponseWriter, r *http.Request) {
+	list := r.PathValue("list")
+	on := r.FormValue(list)
+
+	if on == "on" {
+		c.AddList(w, r)
+	} else {
+		c.RemoveList(w, r)
+	}
+
 }

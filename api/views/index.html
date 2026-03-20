@@ -15,12 +15,33 @@
         //    }
         //}
 
+        function getLists() {
+            const url = new URL(window.location.href);
+            return url.searchParams.getAll("lists")
+        }
 
+        let firstrun = true
+        document.addEventListener('htmx:afterSwap', function(evt) {
+            if(!firstrun){
+                return
+            }
+            firstrun = false
+            const selectedLists = getLists();
+            for (let x of selectedLists) {
+                const el = document.getElementById(`select-list-${x}`)
+                console.log(`select-list-${x}`, el)
+                if(!el){
+                    continue
+                }
+                el.checked = true;
+            }
+        })
         document.addEventListener('htmx:beforeSwap', function(evt) {
             if(evt.detail.xhr.status === 422) {
                 evt.detail.shouldSwap = true;
                 evt.detail.isError = false;
             }
+
         });
 
         document.addEventListener('afterRemove', function(e){
@@ -46,15 +67,86 @@
         });
 
 
+        function toggleFromDataset(el, f){
+            const linkedId = el?.dataset?.linkedId
+            if(!linkedId){
+                return
+            }
+            const list = document.getElementById(linkedId)
+            if(!list){
+                return
+            }
+            list.classList[f]("active")
+        }
+        function onEnter(e) {
+            toggleFromDataset(e.target, "add")
+        }
+        function onLeave(e) {
+            toggleFromDataset(e.target, "remove")
+        }
+
+        function listSelected(e){
+        }
+
     </script>
+    <div
+            onmouseenter="onEnter(event)"
+            onmouseleave="onLeave(event)"
+            data-linked-id="select-lists"
+            >
+            <button class="touchme"
+                    onClick="onEnter(event)"
+                    data-linked-id="select-lists"
+                    >
+                    Select List
+            </button>
+                <div id="select-lists" class="bannerComponentContent">
+                    {{ range . }}
+                    {{ template "selectListInput" . }}
+                    {{ end }}
+                </div>
+    </div>
     <div id="list-all" >
-        {{ range $k, $v := . }}
-            {{ template "list" $v }}
-        {{ end }} 
+        <span
+                hx-get="/api/selection"
+                hx-trigger="load"
+                hx-vals="js:{'lists': getLists()}"
+                hx-swap="outerHTML"
+            >
+            ...
+        </span>
     </div>
     <hr/>
     {{ template "addList" }}
 {{ end }}
+
+{{ block "selectListInput-oob" . }}
+<span hx-swap-oob="beforeend:#select-lists">
+    {{ template "selectListInput" . }}
+</span>
+{{ end }}
+
+{{ block "selectListInput" . }}
+    <label>
+        <input 
+                id="select-list-{{ . }}"
+                type="checkbox" 
+                name="{{ . }}"
+                hx-put="/api/lists/{{ . }}"
+                onchange="listSelected(event)"
+                />
+    {{ . }}
+</label>
+{{ end }}
+
+{{ block "listSelection" . }}
+    <div hx-swap-oob="innerHTML:#list-all">
+        {{ range $k, $v := . }}
+            {{ template "list" $v }}
+        {{ end }} 
+    </div>
+{{ end }}
+
 
 {{ block "addList" . }}
     <form hx-swap="outerHTML" hx-post="/api/lists"
@@ -77,7 +169,7 @@
 {{ end}}
 
 {{ block "form" . }} 
-    <form hx-swap="outerHTML" hx-post="/api/{{ .List }}/tasks"
+    <form hx-swap="outerHTML" hx-post="/api/lists/{{ .List }}/tasks"
             class="task-input"
     >
         Name: <input 
@@ -100,7 +192,7 @@
         {{ if ne .Form.List "default" }}
         <button 
             class="hide-list"
-            hx-delete="/api/{{ .Form.List }}"
+            hx-delete="/api/lists/{{ .Form.List }}"
             hx-target="#list-{{ .Form.List }}"
             hx-swap="delete"
         >
@@ -110,8 +202,8 @@
     </div>
 {{ end }}
 
-{{ block "delete" . }}
-<div hx-swap-oob="delete:#">
+{{ block "deleteList" . }}
+<div hx-swap-oob="delete:#list-{{.}}">
 </div>
 {{ end}}
 
@@ -163,7 +255,7 @@
              >
                  <div class="button-column button-left">
                     <button 
-                         hx-put="/api/{{ .List }}/tasks/{{ .Id }}" 
+                         hx-put="/api/lists/{{ .List }}/tasks/{{ .Id }}" 
                          hx-vals='{"move":"back"}'
                      >
                         &lsaquo;
@@ -174,7 +266,7 @@
                 </div>
                 <div class="button-column button-right">
                     <button
-                        hx-put="/api/{{ .List }}/tasks/{{ .Id }}" 
+                        hx-put="/api/lists/{{ .List }}/tasks/{{ .Id }}" 
                         hx-vals='{"move":"forward"}'
                     >
                         &rsaquo;

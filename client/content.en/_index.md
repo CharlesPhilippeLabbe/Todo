@@ -7,22 +7,14 @@ type: docs
 <meta name="htmx-config" content='{"useTemplateFragments":"true"}'>
 
 
-<button class="touchme"
-    hx-delete="/data" hx-target="#place">
-touch
-</button>
+
 <script>
-    function getLists() {
-        const url = new URL(window.location.href);
-        return url.searchParams.getAll("lists")
-    }
 
 </script>
 
 <div style="width:100%;"
     id="place"
     hx-get="/api" hx-swap="innerHTML"
-    hx-vals="js:{'lists': getLists()}"
     hx-trigger="load"
 >
     placeholder

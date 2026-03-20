@@ -46,6 +46,34 @@ func (r *Repository) AddTask(ctx context.Context, list, category, name string) (
 	return id, err
 }
 
+func (r *Repository) AllLists(ctx context.Context) ([]string, error) {
+	res, err := r.db.QueryContext(ctx,
+		"SELECT list from tasks group by list")
+
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+	if res == nil {
+		return nil, fmt.Errorf("result is nil")
+	}
+
+	l := make([]string, 0)
+	for res.Next() {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		var s string
+		err = res.Scan(&s)
+		if err != nil {
+			return nil, err
+		}
+		l = append(l, s)
+	}
+
+	return l, nil
+}
+
 func (r *Repository) ListCategory(ctx context.Context, list, category string) ([]*Task, error) {
 
 	res, err := r.db.QueryContext(ctx,

@@ -83,3 +83,29 @@
     border-color: #eee;
     padding: 0.2em;
 }
+
+
+.bannerComponent:active {
+  background: var(--body-background);
+}
+
+.bannerComponentContent.active {
+    display: block;
+}
+/* Dropdown Content (Hidden by Default) */
+.bannerComponentContent {
+    display: none;
+    top: 1em;
+    padding: 1vw;
+    color: black;
+    background-color: var(--body-background);
+    box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.43);
+    z-index: 100;
+    border-bottom-left-radius: 0.5vh;
+    border-bottom-right-radius: 0.5vh;
+    width:100%;
+    text-align: left;
+    flex-direction: column;
+
+}
+

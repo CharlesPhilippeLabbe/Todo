@@ -33,6 +33,10 @@ func (c *Controller) NewTask(ctx context.Context, list, category, name string) (
 	}, nil
 }
 
+func (c *Controller) AllLists(ctx context.Context) ([]string, error){
+	return c.r.AllLists(ctx)
+}
+
 func (c *Controller) ListCategory(ctx context.Context, list, category string) ([]*Task, error) {
 	tasks, err := c.r.ListCategory(ctx, list, category)
 	if err != nil {
