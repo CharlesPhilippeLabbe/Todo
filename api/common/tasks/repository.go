@@ -32,7 +32,7 @@ func NewRepository(db *storage.Database) (*Repository, error) {
 	return &Repository{"tasks", db}, nil
 }
 
-func (r *Repository) AddTask(ctx context.Context, list, category, name string) (string, error) {
+func (r *Repository) AddTask(ctx context.Context, list, category, name, priority string) (string, error) {
 	id, err := r.db.CreateId()
 	if err != nil {
 		return "", err
@@ -40,8 +40,8 @@ func (r *Repository) AddTask(ctx context.Context, list, category, name string) (
 
 	_, err = r.db.ExecContext(
 		ctx,
-		"INSERT INTO tasks (id, list, category, name) VALUES (?, ?, ?, ?);",
-		id, list, category, name)
+		"INSERT INTO tasks (id, list, category, name, priority) VALUES (?, ?, ?, ?, ?);",
+		id, list, category, name, priority)
 
 	return id, err
 }
@@ -77,7 +77,7 @@ func (r *Repository) AllLists(ctx context.Context) ([]string, error) {
 func (r *Repository) ListCategory(ctx context.Context, list, category string) ([]*Task, error) {
 
 	res, err := r.db.QueryContext(ctx,
-		"SELECT id, list, category, name from tasks where list = ? and category = ? order by id desc",
+		"SELECT id, list, category, name from tasks where list = ? and category = ? order by priority desc",
 		list, category)
 
 	if err != nil {
@@ -91,7 +91,7 @@ func (r *Repository) ListCategory(ctx context.Context, list, category string) ([
 func (r *Repository) List(ctx context.Context, list string, f ListFunc) error {
 
 	res, err := r.db.QueryContext(ctx,
-		"SELECT id, list, category, name from tasks where list = ? order by id desc",
+		"SELECT id, list, category, name, priority from tasks where list = ? order by priority desc",
 		list)
 
 	if err != nil {
@@ -102,7 +102,15 @@ func (r *Repository) List(ctx context.Context, list string, f ListFunc) error {
 	return tasksFromResult(ctx, res, f)
 }
 
-func (r *Repository) Put(ctx context.Context, id, newCategory string) error {
+func (r *Repository) SetPriority(ctx context.Context, id, priority string) error {
+	_, err := r.db.ExecContext(ctx,
+		"UPDATE tasks set priority = ? where id = ?",
+		priority, id)
+
+	return err
+}
+
+func (r *Repository) SetCategory(ctx context.Context, id, newCategory string) error {
 	_, err := r.db.ExecContext(ctx,
 		"UPDATE tasks set category = ? where id = ?",
 		newCategory, id)
@@ -120,7 +128,7 @@ func (r *Repository) Delete(ctx context.Context, id string) error {
 
 func (r *Repository) Get(ctx context.Context, list, id string) (*Task, error) {
 	res, err := r.db.QueryContext(ctx,
-		"SELECT id, list, category, name from tasks where list = ? and id = ?",
+		"SELECT id, list, category, name, priority from tasks where list = ? and id = ?",
 		list, id)
 
 	if err != nil {
@@ -128,6 +136,34 @@ func (r *Repository) Get(ctx context.Context, list, id string) (*Task, error) {
 	}
 	defer res.Close()
 
+	return singleTask(ctx, res)
+}
+
+func (r *Repository) Above(ctx context.Context, list, category, priority string) (*Task, error) {
+	res, err := r.db.QueryContext(ctx,
+		"SELECT id, list, category, name, priority from tasks where list = ? and category = ? and priority > ? ORDER BY priority ASC",
+		list, category, priority)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	return singleTask(ctx, res)
+}
+
+func (r *Repository) Below(ctx context.Context, list, category, priority string) (*Task, error) {
+	res, err := r.db.QueryContext(ctx,
+		"SELECT id, list, category, name, priority from tasks where list = ? and category = ? and priority < ? ORDER BY priority DESC",
+		list, category, priority)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+
+	return singleTask(ctx, res)
+}
+
+func singleTask(ctx context.Context, res *sql.Rows) (*Task, error) {
 	l, err := createList(ctx, res)
 	if err != nil {
 		return nil, err
@@ -137,7 +173,6 @@ func (r *Repository) Get(ctx context.Context, list, id string) (*Task, error) {
 
 	return l[0], nil
 }
-
 func createList(ctx context.Context, res *sql.Rows) ([]*Task, error) {
 	tasks := make([]*Task, 0)
 
@@ -163,7 +198,7 @@ func tasksFromResult(ctx context.Context, res *sql.Rows, f ListFunc) error {
 			return ctx.Err()
 		}
 		t := Task{}
-		err = res.Scan(&t.Id, &t.List, &t.Category, &t.Name)
+		err = res.Scan(&t.Id, &t.List, &t.Category, &t.Name, &t.Priority)
 		if err != nil {
 			return err
 		}

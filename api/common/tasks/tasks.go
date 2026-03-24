@@ -6,15 +6,30 @@ import (
 )
 
 var (
-	ErrTaskDoesNotExist   error = fmt.Errorf("task not found")
-	ErrTargetDoesNotExist error = fmt.Errorf("target does not exit")
+	ErrTaskDoesNotExist     error = fmt.Errorf("task not found")
+	ErrTargetDoesNotExist   error = fmt.Errorf("target does not exit")
+	ErrUnsupportedDirection error = fmt.Errorf("unsupported direction")
 )
 
 type Task struct {
-	Id       string `json:"id,omitempty"`
-	Name     string `json:"name,omitempty"`
-	List     string `json:"list,omitempty"`
-	Category string `json:"category,omitempty"`
+	Id       string  `json:"id,omitempty"`
+	Name     string  `json:"name,omitempty"`
+	List     string  `json:"list,omitempty"`
+	Category string  `json:"category,omitempty"`
+	Priority *string `json:"priority,omitempty"`
+}
+
+type Position string
+
+const (
+	Above Position = "above"
+	Below Position = "below"
+)
+
+type TargetTask struct {
+	Task
+	Target   *Task
+	Position Position
 }
 
 func NewTask(name string) Task {

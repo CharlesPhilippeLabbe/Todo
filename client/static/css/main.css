@@ -27,15 +27,14 @@
 }
 
 .list table tr td {
-    padding: 5px 0;
+    padding: 0;
     width: 200px;
 }
 
 .list .task .name {
     text-align: left;
-    margin-left: 22px;
-    margin-right: 22px;
     width: 100%;
+    display: flex;
 }
 
 .list tr {
@@ -43,8 +42,24 @@
 .list .task {
     width: 100%;
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     justify-content: space-between;
+    padding: 0 22px;
+}
+
+.list .button-vertical svg {
+    width: 0.8em;
+}
+.list .button-vertical button {
+    width: 100%;
+    background: transparent;
+    border: none;
+    height: 22px;
+}
+.list .button-vertical {
+    display: block;
+    width: 100%;
+    height: 22px;
 }
 
 .list .button-column {
@@ -55,29 +70,35 @@
     top: 0px;
 }
 
-.list .button-column button:hover {
+.list  button:hover svg,
+.list  button:hover {
     background: var(--gray-200);
     cursor: pointer;
+    color: gray;
+    fill: gray;
+
 }
-.list .button-column button {
+
+.list  svg,
+.list  button {
     width:20px;
     height:100%;
     background: transparent;
-    border: none;
-    color: white;
     border-radius: 5px;
+    border: none;
+    color: transparent;
+    fill: transparent;
 }
 
 .list .button-column.button-right {
-    right: 20px;
+    left: 100%;
 }
 .list .button-column.button-left {
-    left: 0px;
+    left: -20px;
 }
 
 .hide-list {
     width: 100%;
-    color: white;
     background: transparent;
     border-radius: 0.5em;
     border-color: #eee;
@@ -97,7 +118,6 @@
     display: none;
     top: 1em;
     padding: 1vw;
-    color: black;
     background-color: var(--body-background);
     box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.43);
     z-index: 100;

@@ -159,7 +159,9 @@ func (c *Controller) AddTask(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("New Task: %v\n", t)
 	c.render(w, "form", newFormData(list))
-	c.render(w, "oob-task", t)
+	c.render(w, "oob-task", tasks.TargetTask{ //TODO I don't like this
+		Task: *t,
+	})
 }
 
 func (c *Controller) MoveTask(w http.ResponseWriter, r *http.Request) {
@@ -171,9 +173,18 @@ func (c *Controller) MoveTask(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	} else if t == nil {
+		log.Println("target task is nil")
+		//w.WriteHeader(http.StatusNotFound)
 		return
 	}
-
+	switch t.Position {
+	case tasks.Above:
+		t.Position = tasks.Position(fmt.Sprintf("beforebegin:#task-%s", t.Target.Id))
+	case tasks.Below:
+		t.Position = tasks.Position(fmt.Sprintf("afterend:#task-%s", t.Target.Id))
+	default:
+		t.Position = tasks.Position(fmt.Sprintf("afterbegin:#%s-%s-table", t.List, t.Category))
+	}
 	c.render(w, "oob-task", t)
 }
 

@@ -49,6 +49,7 @@
                 return
             }
             const url = new URL(window.location.href);
+            console.log(e.detail.value)
             url.searchParams.delete("lists", e.detail.value);
             window.history.pushState({path:url.href}, '', url.href)
         });
@@ -253,35 +254,57 @@
                  hx-target="#task-{{ .Id }}" 
                  hx-swap="delete"
              >
-                 <div class="button-column button-left">
+                 <span class="button-vertical button-up">
                     <button 
                          hx-put="/api/lists/{{ .List }}/tasks/{{ .Id }}" 
-                         hx-vals='{"move":"back"}'
+                         hx-vals='{"move":"up"}'
                      >
-                        &lsaquo;
+                     <svg focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"> <path d="M5.41 7.59L4 9l8 8 8-8-1.41-1.41L12 14.17" transform="rotate(180 12 12)"></path> </svg>
                     </button>
-                </div>
-                <div class="name">
+                </span>
+                <span class="name">
+                     <span class="button-column button-left">
+                        <button 
+                             hx-put="/api/lists/{{ .List }}/tasks/{{ .Id }}" 
+                             hx-vals='{"move":"back"}'
+                         >
+                            &lsaquo;
+                        </button>
+                    </span>
+                    <span class="button-column button-right">
+                        <button
+                            hx-put="/api/lists/{{ .List }}/tasks/{{ .Id }}" 
+                            hx-vals='{"move":"forward"}'
+                        >
+                            &rsaquo;
+                        </button>
+                    </span>
                     {{ .Name }} 
-                </div>
-                <div class="button-column button-right">
-                    <button
-                        hx-put="/api/lists/{{ .List }}/tasks/{{ .Id }}" 
-                        hx-vals='{"move":"forward"}'
-                    >
-                        &rsaquo;
+                </span>
+                 <span class="button-vertical button-down">
+                    <button 
+                         hx-put="/api/lists/{{ .List }}/tasks/{{ .Id }}" 
+                         hx-vals='{"move":"down"}'
+                     >
+                     <svg focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5.41 7.59L4 9l8 8 8-8-1.41-1.41L12 14.17"></path></svg>
                     </button>
-                </div>
+                </span>
             </div>
         </td>
     </tr>
 {{ end }}
 
 {{ block "oob-task" . }} 
-	<template>
-        <tbody  hx-swap-oob="afterbegin:#{{ .List }}-{{ .Category }}-table" >
+<template>
+    <tbody
+            {{ if .Position }}
+                hx-swap-oob="{{ .Position }}" 
+            {{ else }}
+                hx-swap-oob="afterbegin:#{{ .List }}-{{ .Category }}-table"
+            {{ end}}
+        >
         {{ template "task" . }}
     </tbody>
-	</template>
+</template>
 {{ end }}
 
