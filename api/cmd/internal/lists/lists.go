@@ -171,10 +171,10 @@ func (c *Controller) MoveTask(w http.ResponseWriter, r *http.Request) {
 	t, err := c.tc.MoveTask(r.Context(), list, id, move)
 	if err != nil {
 		log.Println(err)
+		w.WriteHeader(http.StatusNotFound)
 		return
 	} else if t == nil {
 		log.Println("target task is nil")
-		//w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	switch t.Position {

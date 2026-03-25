@@ -114,7 +114,7 @@ func (c *Controller) MoveTaskVertical(ctx context.Context, list, id, direction s
 	}
 
 	if targetTask == nil {
-		return nil, nil
+		return nil, fmt.Errorf("could not find target")
 	}
 
 	if targetTask.Priority != nil {
