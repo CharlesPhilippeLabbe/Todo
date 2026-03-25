@@ -50,10 +50,15 @@
 .list .button-vertical svg {
     width: 0.8em;
 }
+.list .button-vertical.button-down button{
+    top: -10px;
+}
+
 .list .button-vertical button {
     width: 100%;
-    background: transparent;
-    border: none;
+    display: block;
+    position:relative;
+    height: 25px
 }
 .list .button-vertical {
     display: block;
