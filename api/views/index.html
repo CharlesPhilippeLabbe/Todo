@@ -69,10 +69,13 @@
             if(!e?.detail?.value){
                 return
             }
+            setChecked(e.detail.value, true)
+            if(e.detail.value == "default"){
+                return
+            }
             const url = new URL(window.location.href);
             url.searchParams.append("lists", e.detail.value);
             state.push(e.detail.value)
-            setChecked(e.detail.value, true)
             window.history.pushState({path:url.href}, '', url.href)
         });
 
