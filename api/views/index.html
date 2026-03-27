@@ -19,23 +19,27 @@
             const url = new URL(window.location.href);
             return url.searchParams.getAll("lists")
         }
-
+        let state = getLists()
         let firstrun = true
+        function setChecked(x, value){
+            const el = document.getElementById(`select-list-${x}`)
+            if(!el){
+                return
+            }
+            el.checked = value;
+        }
         document.addEventListener('htmx:afterSwap', function(evt) {
             if(!firstrun){
                 return
             }
             firstrun = false
             const selectedLists = getLists();
+            setChecked("default", true)
             for (let x of selectedLists) {
-                const el = document.getElementById(`select-list-${x}`)
-                console.log(`select-list-${x}`, el)
-                if(!el){
-                    continue
-                }
-                el.checked = true;
+                setChecked(x, true)
             }
         })
+
         document.addEventListener('htmx:beforeSwap', function(evt) {
             if(evt.detail.xhr.status === 422) {
                 evt.detail.shouldSwap = true;
@@ -49,8 +53,15 @@
                 return
             }
             const url = new URL(window.location.href);
-            console.log(e.detail.value)
-            url.searchParams.delete("lists", e.detail.value);
+            url.searchParams.delete("lists")
+            setChecked(e.detail.value, false)
+            state = state.filter(x =>{//Work around to make it work with old safari
+                if(x == e.detail.value){
+                    return false
+                }
+                url.searchParams.append("lists", x)
+                return true
+            })
             window.history.pushState({path:url.href}, '', url.href)
         });
 
@@ -60,6 +71,8 @@
             }
             const url = new URL(window.location.href);
             url.searchParams.append("lists", e.detail.value);
+            state.push(e.detail.value)
+            setChecked(e.detail.value, true)
             window.history.pushState({path:url.href}, '', url.href)
         });
 
