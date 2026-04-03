@@ -43,8 +43,15 @@ func main() {
 
 	// Registering a handler for a specific method and path with a variable
 	mux.HandleFunc("/{path...}", func(w http.ResponseWriter, r *http.Request) {
+		log.Println("proxy")
 		proxy.ServeHTTP(w, r)
 	})
+
+	jsFs := http.FileServer(http.Dir("./js"))
+	cssFs := http.FileServer(http.Dir("./css"))
+
+	mux.Handle("GET /api/js/", http.StripPrefix("/api/js/", jsFs))
+	mux.Handle("GET /api/css/", http.StripPrefix("/api/css/", cssFs))
 
 	mux.HandleFunc("GET /api", api.Index)
 

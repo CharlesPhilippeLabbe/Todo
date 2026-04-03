@@ -3,7 +3,6 @@ title: Introduction
 type: docs
 ---
 <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js"></script>
-<link href="/css/main.css" rel="stylesheet">
 <meta name="htmx-config" content='{"useTemplateFragments":"true"}'>
 
 
